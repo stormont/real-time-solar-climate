@@ -1,0 +1,19 @@
+{
+	feeds: [
+		{
+			"id":1,
+			"type":"temperature",
+			"units":"celsius"
+		},
+		{
+			"id":2,
+			"type":"pressure",
+			"units":"pascals"
+		},
+		{
+			"id":3,
+			"type":"oxygen",
+			"units":"ppm"
+		},
+	]
+}

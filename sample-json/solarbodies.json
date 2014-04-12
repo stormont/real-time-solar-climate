@@ -1,6 +1,12 @@
 {
 	"solarBodies": [
-		"solarbody1.json",
-		"solarbody2.json"
+		{
+			"id":1,
+			"name":"Earth"
+		},
+		{
+			"id":2,
+			"name":"Mars"
+		}
 	]
 }

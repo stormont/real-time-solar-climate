@@ -1,0 +1,50 @@
+{
+	"sensors": [
+		{
+			"id":1,
+			"name":"Curiosity Rover",
+			"infoUrl":"http://www.nasa.gov/mission_pages/msl/",
+			"location": {
+				"solarBodyID":2,
+				"latitude":40.09,
+				"longitude":138.12,
+				"elevation":1234.56
+			},
+			"frequency": {
+				"last":12345678,
+				"interval":300
+			},
+			"levels": [
+				{
+					"feedID":1,
+					"current":12.1,
+					"min":11.9,
+					"max":12.4
+				}
+			]
+		},
+		{
+			"id":2,
+			"name":"Earth Climate Station",
+			"infoUrl":"http://www.example.com",
+			"location": {
+				"solarBodyID":1,
+				"latitude":12.09,
+				"longitude":64.12,
+				"elevation":3234.56
+			},
+			"frequency": {
+				"last":12341234,
+				"interval":5
+			},
+			"levels": [
+				{
+					"feedID":1,
+					"current":22.1,
+					"min":20.9,
+					"max":24.4
+				}
+			]
+		}
+	]
+}

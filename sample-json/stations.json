@@ -1,10 +1,16 @@
 {
+	"id":1,
+	"name":"Curiosity Rover"
+	"infoUrl":"http://www.nasa.gov/mission_pages/msl/",
+	"isStationary":false,
+	"solarBodyID":2,
 	"sensors": [
 		{
 			"id":1,
 			"name":"Forward Sensor",
 			"infoUrl":"http://www.nasa.gov/mission_pages/msl/",
 			"location": {
+				"solarBodyID":2,
 				"latitude":40.09,
 				"longitude":138.12,
 				"elevation":1234.56

@@ -1,13 +1,14 @@
-
+{-# LANGUAGE DeriveDataTypeable #-}
 module DataTypes
    ( SolarBody(..)
-   , Feed(..)
+   , FeedType(..)
    , Station(..)
    , Sensor(..)
    , Location(..)
    , LifeSupport(..)
    , Frequency(..)
    , Level(..)
+   , JsonCount(..)
    ) where
 
 import Control.Applicative ( (<*>), (<$>) )
@@ -26,15 +27,15 @@ data SolarBody =
    SolarBody
       { solarBodyId   :: Integer
       , solarBodyName :: Text
-      } deriving (Show,Read)
+      } deriving (Show,Read,Data,Typeable,Eq)
 
 
-data Feed =
-   Feed
+data FeedType =
+   FeedType
       { feedId    :: Integer
       , feedType  :: Text
       , feedUnits :: Text
-      } deriving (Show,Read)
+      } deriving (Show,Read,Data,Typeable,Eq)
 
 
 data Location =
@@ -42,42 +43,43 @@ data Location =
       { locationLatitude    :: Double
       , locationLongitude   :: Double
       , locationElevation   :: Double
-      } deriving (Show,Read)
+      } deriving (Show,Read,Data,Typeable,Eq)
 
 
 data Frequency =
    Frequency
       { frequencyLastUpdate :: Integer
       , frequencyInterval   :: Integer
-      } deriving (Show,Read)
+      } deriving (Show,Read,Data,Typeable,Eq)
 
 
 data Level =
    Level
-      { levelFeedId  :: Integer
-      , levelCurrent :: Double
-      , levelMin     :: Maybe Double
-      , levelMax     :: Maybe Double
-      } deriving (Show,Read)
+      { levelFeedTypeId  :: Integer
+      , levelCurrent     :: Double
+      , levelMin         :: Maybe Double
+      , levelMax         :: Maybe Double
+      } deriving (Show,Read,Data,Typeable,Eq)
 
 
 data LifeSupport =
    LifeSupport
       { lifeSupportIsHabitable :: Bool
       , lifeSupportLastChange  :: Maybe Integer
-      } deriving (Show,Read)
+      } deriving (Show,Read,Data,Typeable,Eq)
 
 
 data Sensor =
    Sensor
       { sensorId          :: Integer
+      , sensorStationId   :: Integer
       , sensorName        :: Text
       , sensorInfoUrl     :: Text
       , sensorLocation    :: Location
       , sensorFrequency   :: Frequency
       , sensorLifeSupport :: LifeSupport
       , sensorLevels      :: [Level]
-      } deriving (Show,Read)
+      } deriving (Show,Read,Data,Typeable,Eq)
 
 
 data Station =
@@ -87,7 +89,13 @@ data Station =
       , stationInfoUrl      :: Text
       , stationSolarBodyID  :: Integer
       , stationIsStationary :: Bool
-      , stationSensors      :: [Sensor]
+      , stationSensors      :: [Integer]
+      } deriving (Show,Read,Data,Typeable,Eq)
+
+
+data JsonCount =
+   JsonCount
+      { jcCount :: Integer
       } deriving (Show,Read)
 
 
@@ -119,6 +127,8 @@ t_levels       = pack "levels"
 t_solarBodyID  = pack "solarBodyID"
 t_isStationary = pack "isStationary"
 t_sensors      = pack "sensors"
+t_count        = pack "count"
+t_stationId    = pack "stationID"
 
 
 instance FromJSON SolarBody where
@@ -135,16 +145,16 @@ instance ToJSON SolarBody where
       ]
 
 
-instance FromJSON Feed where
-   parseJSON (Object x) =   Feed
+instance FromJSON FeedType where
+   parseJSON (Object x) =   FeedType
                         <$> (x .: t_id)
                         <*> (x .: t_type)
                         <*> (x .: t_units)
    parseJSON _          = mzero
 
 
-instance ToJSON Feed where
-   toJSON (Feed a b c) = object
+instance ToJSON FeedType where
+   toJSON (FeedType a b c) = object
       [ t_id    .= a
       , t_type  .= b
       , t_units .= c
@@ -216,6 +226,7 @@ instance ToJSON LifeSupport where
 instance FromJSON Sensor where
    parseJSON (Object x) =   Sensor
                         <$> (x .: t_id)
+                        <*> (x .: t_stationId)
                         <*> (x .: t_name)
                         <*> (x .: t_infoUrl)
                         <*> (x .: t_location)
@@ -226,14 +237,15 @@ instance FromJSON Sensor where
 
 
 instance ToJSON Sensor where
-   toJSON (Sensor a b c d e f g) = object
+   toJSON (Sensor a b c d e f g h) = object
       [ t_id          .= a
-      , t_name        .= b
-      , t_infoUrl     .= c
-      , t_location    .= d
-      , t_frequency   .= e
-      , t_lifeSupport .= f
-      , t_levels      .= g
+      , t_stationId   .= b
+      , t_name        .= c
+      , t_infoUrl     .= d
+      , t_location    .= e
+      , t_frequency   .= f
+      , t_lifeSupport .= g
+      , t_levels      .= h
       ]
 
 
@@ -256,4 +268,16 @@ instance ToJSON Station where
       , t_solarBodyID  .= d
       , t_isStationary .= e
       , t_sensors      .= f
+      ]
+
+
+instance FromJSON JsonCount where
+   parseJSON (Object x) =   JsonCount
+                        <$> (x .: t_count)
+   parseJSON _          = mzero
+
+
+instance ToJSON JsonCount where
+   toJSON (JsonCount a) = object
+      [ t_count .= a
       ]

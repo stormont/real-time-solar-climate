@@ -5,57 +5,7 @@
 	"isStationary":false,
 	"solarBodyID":2,
 	"sensors": [
-			{
-				"id":1,
-				"name":"Forward Sensor",
-				"infoUrl":"http://www.nasa.gov/mission_pages/msl/",
-				"location": {
-					"latitude":40.09,
-					"longitude":138.12,
-					"elevation":1234.56
-				},
-				"frequency": {
-					"lastUpdate":12345678,
-					"interval":300
-				},
-				"levels": [
-					{
-						"feedID":1,
-						"current":12.1,
-						"min":11.9,
-						"max":12.4
-					}
-				],
-				"lifeSupport": {
-					"isHabitable":false,
-					"lastChange":123456
-				}
-			},
-			{
-				"id":2,
-				"name":"Rear Sensor",
-				"infoUrl":"http://www.nasa.gov/mission_pages/msl/",
-				"location": {
-					"latitude":12.09,
-					"longitude":64.12,
-					"elevation":3234.56
-				},
-				"frequency": {
-					"lastUpdate":12341234,
-					"interval":5
-				},
-				"levels": [
-					{
-						"feedID":1,
-						"current":22.1,
-						"min":20.9,
-						"max":24.4
-					}
-				],
-				"lifeSupport": {
-					"isHabitable":false,
-					"lastChange":123456
-				}
-			}
+		1,
+		2
 	]
 }

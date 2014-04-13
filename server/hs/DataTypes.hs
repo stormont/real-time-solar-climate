@@ -11,6 +11,7 @@ module DataTypes
    , JsonCount(..)
    , JsonID(..)
    , HttpResponse(..)
+   , RandomSensor(..)
    ) where
 
 import Control.Applicative ( (<*>), (<$>) )
@@ -38,9 +39,9 @@ instance Eq SolarBody where
 
 data FeedType =
    FeedType
-      { feedTypeId :: Integer
-      , feedType   :: Text
-      , feedUnits  :: Text
+      { feedTypeId    :: Integer
+      , feedType      :: Text
+      , feedTypeUnits :: Text
       } deriving (Show,Read,Data,Typeable)
 
 
@@ -129,37 +130,56 @@ data HttpResponse =
       } deriving (Show,Read)
 
 
+data RandomSensor =
+   RandomSensor
+      { randomSensorSolarBodyId   :: Integer
+      , randomSensorSolarBodyName :: Text
+      , randomSensorStationId     :: Integer
+      , randomSensorStationName   :: Text
+      , randomSensorSensorId      :: Integer
+      , randomSensorSensorName    :: Text
+      , randomSensorLevelCurrent  :: Double
+      , randomSensorFeedTypeUnits :: Text
+      } deriving (Show,Read)
+
+
 -----------------------------------------------------------
 -- INTERNAL Declarations
 -----------------------------------------------------------
 
 
-t_id           = pack "id"
-t_name         = pack "name"
-t_type         = pack "type"
-t_units        = pack "units"
-t_latitude     = pack "latitude"
-t_longitude    = pack "longitude"
-t_elevation    = pack "elevation"
-t_lastUpdate   = pack "lastUpdate"
-t_interval     = pack "interval"
-t_feedID       = pack "feedTypeID"
-t_current      = pack "current"
-t_min          = pack "min"
-t_max          = pack "max"
-t_isHabitable  = pack "isHabitable"
-t_lastChange   = pack "lastChange"
-t_infoUrl      = pack "infoUrl"
-t_location     = pack "location"
-t_frequency    = pack "frequency"
-t_lifeSupport  = pack "lifeSupport"
-t_levels       = pack "levels"
-t_solarBodyID  = pack "solarBodyID"
-t_isStationary = pack "isStationary"
-t_count        = pack "count"
-t_stationId    = pack "stationID"
-t_code         = pack "code"
-t_message      = pack "message"
+t_id            = pack "id"
+t_name          = pack "name"
+t_type          = pack "type"
+t_units         = pack "units"
+t_latitude      = pack "latitude"
+t_longitude     = pack "longitude"
+t_elevation     = pack "elevation"
+t_lastUpdate    = pack "lastUpdate"
+t_interval      = pack "interval"
+t_feedID        = pack "feedTypeID"
+t_current       = pack "current"
+t_min           = pack "min"
+t_max           = pack "max"
+t_isHabitable   = pack "isHabitable"
+t_lastChange    = pack "lastChange"
+t_infoUrl       = pack "infoUrl"
+t_location      = pack "location"
+t_frequency     = pack "frequency"
+t_lifeSupport   = pack "lifeSupport"
+t_levels        = pack "levels"
+t_solarBodyID   = pack "solarBodyID"
+t_isStationary  = pack "isStationary"
+t_count         = pack "count"
+t_stationId     = pack "stationID"
+t_code          = pack "code"
+t_message       = pack "message"
+t_solarBodyId   = pack "solarBodyID"
+t_solarBodyName = pack "solarBodyName"
+t_stationName   = pack "stationName"
+t_sensorId      = pack "sensorID"
+t_sensorName    = pack "sensorName"
+t_currentLevel  = pack "currentLevel"
 
 
 instance FromJSON SolarBody where
@@ -335,4 +355,30 @@ instance ToJSON HttpResponse where
    toJSON (HttpResponse a b) = object
       [ t_code    .= a
       , t_message .= b
+      ]
+
+
+instance FromJSON RandomSensor where
+   parseJSON (Object x) =   RandomSensor
+                        <$> (x .: t_solarBodyId)
+                        <*> (x .: t_solarBodyName)
+                        <*> (x .: t_stationId)
+                        <*> (x .: t_stationName)
+                        <*> (x .: t_sensorId)
+                        <*> (x .: t_sensorName)
+                        <*> (x .: t_currentLevel)
+                        <*> (x .: t_units)
+   parseJSON _          = mzero
+
+
+instance ToJSON RandomSensor where
+   toJSON (RandomSensor a b c d e f g h) = object
+      [ t_solarBodyId   .= a
+      , t_solarBodyName .= b
+      , t_stationId     .= c
+      , t_stationName   .= d
+      , t_sensorId      .= e
+      , t_sensorName    .= f
+      , t_currentLevel  .= g
+      , t_units         .= h
       ]

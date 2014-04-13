@@ -17,6 +17,7 @@ import Data.Text           (pack)
 import Data.Time
 import Happstack.Server
 import Happstack.Server.Compression
+import System.Random
 import Prelude hiding (log)
 
 import AcidTypes
@@ -68,6 +69,7 @@ doGet acid = do
             , dir "feedtypes"   $ doGetFeedTypes acid
             , dir "stations"    $ doGetById "solarbodyid" (doGetStations acid)
             , dir "sensors"     $ doGetById "stationid" (doGetSensors acid)
+            , dir "random"      $ doGetRandom acid
             , do
                liftIO $ putStrLn "HTTP 400 - unrecognized GET"
                toJsonResponse badRequest $ HttpResponse 400 $ pack "Invalid get/ request"
@@ -153,6 +155,52 @@ doGetSensors acid parentId = do
                   [] -> xs'
                   _  -> filter (\x -> any (== sensorId x) ids) xs'
          toJsonResponse ok xs''
+
+
+getRandIndex :: [a] -> IO a
+getRandIndex xs = do
+   let n = length xs - 1
+   i <- getStdRandom (randomR (0,n))
+   return $ xs !! i
+
+
+doGetRandom acid = do
+   solarBodies <- query' acid GetSolarBodies
+   if solarBodies == []
+      then do
+         liftIO $ putStrLn "solarBodies is empty"
+         mzero
+      else do
+         solarBody <- liftIO $ getRandIndex solarBodies
+         stations' <- query' acid GetStations
+         let stations = filter (\x -> stationSolarBodyId x == solarBodyId solarBody) stations'
+         if stations == []
+            then do
+               liftIO $ putStrLn "stations is empty"
+               mzero
+            else do
+               station <- liftIO $ getRandIndex stations
+               sensors' <- query' acid GetSensors
+               let sensors = filter (\x -> sensorStationId x == stationId station) sensors'
+               if sensors == []
+                  then do
+                     liftIO $ putStrLn "sensors is empty"
+                     mzero
+                  else do
+                     sensor <- liftIO $ getRandIndex sensors
+                     feedTypes' <- query' acid GetFeedTypes
+                     let level = head $ sensorLevels sensor
+                     let feedType = head $ filter (\x -> feedTypeId x == levelFeedTypeId level) feedTypes'
+                     toJsonResponse ok $
+                        RandomSensor
+                           (solarBodyId solarBody)
+                           (solarBodyName solarBody)
+                           (stationId station)
+                           (stationName station)
+                           (sensorId sensor)
+                           (sensorName sensor)
+                           (levelCurrent level)
+                           (feedTypeUnits feedType)
 
 
 doPutSolarBody acid = do

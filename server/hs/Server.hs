@@ -79,7 +79,7 @@ doGet acid = do
 doPut acid = do
    rq <- askRq
    let meth = rqMethod rq
-   if meth /= POST
+   if meth /= POST && meth /= OPTIONS
       then mzero
       else do
          liftIO $ putStrLn "Handling POST"
@@ -210,7 +210,7 @@ doPutSolarBody acid = do
    case x of
       Left e -> do
          let msg = "Invalid solarbody JSON"
-         liftIO $ putStrLn $ "HTTP 400 - " ++ msg ++ ": " ++ e
+         liftIO $ putStrLn $ "HTTP 400 - " ++ msg ++ ": " ++ e ++ " - " ++ (B.unpack body)
          toJsonResponse badRequest $ HttpResponse 400 $ pack msg
       Right r -> do
          len <- update' acid (PutSolarBody r)
@@ -325,6 +325,7 @@ log rq = do
 
 toJsonResponse functor msg = do
    compressedResponseFilter
+   addHeaderM "Access-Control-Allow-Origin" "*"
    functor $ toResponse $ A.encode msg
 
 

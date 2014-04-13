@@ -199,6 +199,7 @@ doGetRandom acid = do
                            (stationName station)
                            (sensorId sensor)
                            (sensorName sensor)
+                           (feedTypeName feedType)
                            (levelCurrent level)
                            (feedTypeUnits feedType)
 

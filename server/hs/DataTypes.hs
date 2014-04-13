@@ -40,7 +40,7 @@ instance Eq SolarBody where
 data FeedType =
    FeedType
       { feedTypeId    :: Integer
-      , feedType      :: Text
+      , feedTypeName  :: Text
       , feedTypeUnits :: Text
       } deriving (Show,Read,Data,Typeable)
 
@@ -138,6 +138,7 @@ data RandomSensor =
       , randomSensorStationName   :: Text
       , randomSensorSensorId      :: Integer
       , randomSensorSensorName    :: Text
+      , randomSensorFeedType      :: Text
       , randomSensorLevelCurrent  :: Double
       , randomSensorFeedTypeUnits :: Text
       } deriving (Show,Read)
@@ -366,19 +367,21 @@ instance FromJSON RandomSensor where
                         <*> (x .: t_stationName)
                         <*> (x .: t_sensorId)
                         <*> (x .: t_sensorName)
+                        <*> (x .: t_type)
                         <*> (x .: t_currentLevel)
                         <*> (x .: t_units)
    parseJSON _          = mzero
 
 
 instance ToJSON RandomSensor where
-   toJSON (RandomSensor a b c d e f g h) = object
+   toJSON (RandomSensor a b c d e f g h i) = object
       [ t_solarBodyId   .= a
       , t_solarBodyName .= b
       , t_stationId     .= c
       , t_stationName   .= d
       , t_sensorId      .= e
       , t_sensorName    .= f
-      , t_currentLevel  .= g
-      , t_units         .= h
+      , t_type          .= g
+      , t_currentLevel  .= h
+      , t_units         .= i
       ]

@@ -10,7 +10,7 @@
 				"elevation":1234.56
 			},
 			"frequency": {
-				"last":12345678,
+				"lastUpdate":12345678,
 				"interval":300
 			},
 			"levels": [
@@ -36,7 +36,7 @@
 				"elevation":3234.56
 			},
 			"frequency": {
-				"last":12341234,
+				"lastUpdate":12341234,
 				"interval":5
 			},
 			"levels": [

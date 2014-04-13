@@ -1,5 +1,5 @@
 {
-	feeds: [
+	"feeds": [
 		{
 			"id":1,
 			"type":"temperature",

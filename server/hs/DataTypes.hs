@@ -9,6 +9,7 @@ module DataTypes
    , Frequency(..)
    , Level(..)
    , JsonCount(..)
+   , HttpResponse(..)
    ) where
 
 import Control.Applicative ( (<*>), (<$>) )
@@ -27,15 +28,23 @@ data SolarBody =
    SolarBody
       { solarBodyId   :: Integer
       , solarBodyName :: Text
-      } deriving (Show,Read,Data,Typeable,Eq)
+      } deriving (Show,Read,Data,Typeable)
+
+
+instance Eq SolarBody where
+   (==) lhs rhs = solarBodyId lhs == solarBodyId rhs
 
 
 data FeedType =
    FeedType
-      { feedId    :: Integer
-      , feedType  :: Text
-      , feedUnits :: Text
-      } deriving (Show,Read,Data,Typeable,Eq)
+      { feedTypeId :: Integer
+      , feedType   :: Text
+      , feedUnits  :: Text
+      } deriving (Show,Read,Data,Typeable)
+
+
+instance Eq FeedType where
+   (==) lhs rhs = feedTypeId lhs == feedTypeId rhs
 
 
 data Location =
@@ -79,23 +88,37 @@ data Sensor =
       , sensorFrequency   :: Frequency
       , sensorLifeSupport :: LifeSupport
       , sensorLevels      :: [Level]
-      } deriving (Show,Read,Data,Typeable,Eq)
+      } deriving (Show,Read,Data,Typeable)
+
+
+instance Eq Sensor where
+   (==) lhs rhs = sensorId lhs == sensorId rhs
 
 
 data Station =
    Station
-      { stationID           :: Integer
+      { stationId           :: Integer
       , stationName         :: Text
       , stationInfoUrl      :: Text
-      , stationSolarBodyID  :: Integer
+      , stationSolarBodyId  :: Integer
       , stationIsStationary :: Bool
-      , stationSensors      :: [Integer]
-      } deriving (Show,Read,Data,Typeable,Eq)
+      } deriving (Show,Read,Data,Typeable)
+
+
+instance Eq Station where
+   (==) lhs rhs = stationId lhs == stationId rhs
 
 
 data JsonCount =
    JsonCount
       { jcCount :: Integer
+      } deriving (Show,Read)
+
+
+data HttpResponse =
+   HttpResponse
+      { httpResponseCode    :: Int
+      , httpResponseMessage :: Text
       } deriving (Show,Read)
 
 
@@ -113,7 +136,7 @@ t_longitude    = pack "longitude"
 t_elevation    = pack "elevation"
 t_lastUpdate   = pack "lastUpdate"
 t_interval     = pack "interval"
-t_feedID       = pack "feedID"
+t_feedID       = pack "feedTypeID"
 t_current      = pack "current"
 t_min          = pack "min"
 t_max          = pack "max"
@@ -126,9 +149,10 @@ t_lifeSupport  = pack "lifeSupport"
 t_levels       = pack "levels"
 t_solarBodyID  = pack "solarBodyID"
 t_isStationary = pack "isStationary"
-t_sensors      = pack "sensors"
 t_count        = pack "count"
 t_stationId    = pack "stationID"
+t_code         = pack "code"
+t_message      = pack "message"
 
 
 instance FromJSON SolarBody where
@@ -256,18 +280,16 @@ instance FromJSON Station where
                         <*> (x .: t_infoUrl)
                         <*> (x .: t_solarBodyID)
                         <*> (x .: t_isStationary)
-                        <*> (x .: t_sensors)
    parseJSON _          = mzero
 
 
 instance ToJSON Station where
-   toJSON (Station a b c d e f) = object
+   toJSON (Station a b c d e) = object
       [ t_id           .= a
       , t_name         .= b
       , t_infoUrl      .= c
       , t_solarBodyID  .= d
       , t_isStationary .= e
-      , t_sensors      .= f
       ]
 
 
@@ -280,4 +302,18 @@ instance FromJSON JsonCount where
 instance ToJSON JsonCount where
    toJSON (JsonCount a) = object
       [ t_count .= a
+      ]
+
+
+instance FromJSON HttpResponse where
+   parseJSON (Object x) =   HttpResponse
+                        <$> (x .: t_code)
+                        <*> (x .: t_message)
+   parseJSON _          = mzero
+
+
+instance ToJSON HttpResponse where
+   toJSON (HttpResponse a b) = object
+      [ t_code    .= a
+      , t_message .= b
       ]

@@ -84,7 +84,9 @@ putSolarBody :: SolarBody -> Update DB Int
 putSolarBody x = do
    db <- get
    let xs = fromDB db
-       ys = nub $ (x : xs)
+       ys = nub
+          $ (:) x
+          $ filter (\y -> solarBodyId y /= solarBodyId x) xs
    put $ toDB db ys
    return $ length ys
 
@@ -93,7 +95,9 @@ putFeedType :: FeedType -> Update DB Int
 putFeedType x = do
    db <- get
    let xs = fromDB db
-       ys = nub $ (x : xs)
+       ys = nub
+          $ (:) x
+          $ filter (\y -> feedTypeId y /= feedTypeId x) xs
    put $ toDB db ys
    return $ length ys
 
@@ -102,7 +106,9 @@ putStation :: Station -> Update DB Int
 putStation x = do
    db <- get
    let xs = fromDB db
-       ys = nub $ (x : xs)
+       ys = nub
+          $ (:) x
+          $ filter (\y -> stationId y /= stationId x) xs
    put $ toDB db ys
    return $ length ys
 
@@ -111,7 +117,45 @@ putSensor :: Sensor -> Update DB Int
 putSensor x = do
    db <- get
    let xs = fromDB db
-       ys = nub $ (x : xs)
+       ys = nub
+          $ (:) x
+          $ filter (\y -> sensorId y /= sensorId x) xs
+   put $ toDB db ys
+   return $ length ys
+
+
+deleteSolarBody :: Integer -> Update DB Int
+deleteSolarBody x = do
+   db <- get
+   let xs = fromDB db
+       ys = filter (\y -> solarBodyId y /= x) xs
+   put $ toDB db ys
+   return $ length ys
+
+
+deleteFeedType :: Integer -> Update DB Int
+deleteFeedType x = do
+   db <- get
+   let xs = fromDB db
+       ys = filter (\y -> feedTypeId y /= x) xs
+   put $ toDB db ys
+   return $ length ys
+
+
+deleteStation :: Integer -> Update DB Int
+deleteStation x = do
+   db <- get
+   let xs = fromDB db
+       ys = filter (\y -> stationId y /= x) xs
+   put $ toDB db ys
+   return $ length ys
+
+
+deleteSensor :: Integer -> Update DB Int
+deleteSensor x = do
+   db <- get
+   let xs = fromDB db
+       ys = filter (\y -> sensorId y /= x) xs
    put $ toDB db ys
    return $ length ys
 
@@ -135,4 +179,8 @@ $(makeAcidic ''DB [ 'getSolarBodies
                   , 'putFeedType
                   , 'putStation
                   , 'putSensor
+                  , 'deleteSolarBody
+                  , 'deleteFeedType
+                  , 'deleteStation
+                  , 'deleteSensor
                   ])

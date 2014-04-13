@@ -17,6 +17,7 @@ import Data.Text           (pack)
 import Data.Time
 import Happstack.Server
 import Happstack.Server.Compression
+import Prelude hiding (log)
 
 import AcidTypes
 import DataTypes
@@ -42,11 +43,16 @@ main = do
 handlers acid = do
    decodeBody myPolicy
    msum
-      [ dir "v0.1" $ dir "get" $ doGet acid
-      , dir "v0.1" $ dir "put" $ doPut acid
-      , do
-         liftIO $ putStrLn "*** unrecognized top-level handler"
+      [ do
+         rq <- askRq
+         liftIO $ log rq
          mzero
+      , dir "v0.1" $ dir "get"    $ doGet acid
+      , dir "v0.1" $ dir "put"    $ doPut acid
+      , dir "v0.1" $ dir "delete" $ doDelete acid
+      , do
+         liftIO $ putStrLn "HTTP 404"
+         toJsonResponse notFound $ HttpResponse 404 $ pack "Resource not found"
       ]
 
 
@@ -58,8 +64,8 @@ doGet acid = do
       , dir "stations"    $ doGetById "solarbodyid" (doGetStations acid)
       , dir "sensors"     $ doGetById "stationid" (doGetSensors acid)
       , do
-         liftIO $ putStrLn "* unrecognized GET"
-         mzero
+         liftIO $ putStrLn "HTTP 400 - unrecognized GET"
+         toJsonResponse badRequest $ HttpResponse 400 $ pack "Invalid get/ request"
       ]
 
 
@@ -71,8 +77,21 @@ doPut acid = do
       , dir "station"   $ doPutStation acid
       , dir "sensor"    $ doPutSensor acid
       , do
-         liftIO $ putStrLn "* unrecognized POST"
-         mzero
+         liftIO $ putStrLn "HTTP 400 - unrecognized GET"
+         toJsonResponse badRequest $ HttpResponse 400 $ pack "Invalid post/ request"
+      ]
+
+
+doDelete acid = do
+   liftIO $ putStrLn "Handling DELETE"
+   msum
+      [ dir "solarbody" $ doDeleteSolarBody acid
+      , dir "feedtype"  $ doDeleteFeedType acid
+      , dir "station"   $ doDeleteStation acid
+      , dir "sensor"    $ doDeleteSensor acid
+      , do
+         liftIO $ putStrLn "HTTP 400 - unrecognized GET"
+         toJsonResponse badRequest $ HttpResponse 400 $ pack "Invalid delete/ request"
       ]
 
 
@@ -86,28 +105,39 @@ doGetFeedTypes acid = do
    toJsonResponse ok xs
 
 
-doGetStations acid sbid = do
-   let sbid' = readMaybe sbid :: Maybe Integer
-   case sbid' of
-      Nothing -> mzero
+doGetStations acid parentId = do
+   let parentId' = readMaybe parentId :: Maybe Integer
+   case parentId' of
+      Nothing -> do
+         let msg = "solarbodyid is not an integer"
+         liftIO $ putStrLn $ "HTTP 400 - " ++ msg ++ ": " ++ parentId
+         toJsonResponse badRequest $ HttpResponse 400 $ pack msg
       Just i  -> do
          xs <- query' acid GetStations
-         let xs' = filter (\x -> stationSolarBodyID x == i) xs
+         let xs' = filter (\x -> stationSolarBodyId x == i) xs
          toJsonResponse ok xs
 
 
-doGetSensors acid stationId = do
-   sensorIds <- optional $ queryString $ looks "sensorid"
-   xs <- query' acid GetSensors
-   let ids = map fromJust $ filter isJust $
-         case sensorIds of
-            Nothing   -> []
-            Just sids -> map (\x -> readMaybe x :: Maybe Integer) sids
-       xs' =
-         case ids of
-            [] -> xs
-            _  -> filter (\x -> any (== sensorId x) ids) xs
-   toJsonResponse ok xs'
+doGetSensors acid parentId = do
+   let parentId' = readMaybe parentId :: Maybe Integer
+   case parentId' of
+      Nothing -> do
+         let msg = "stationid is not an integer"
+         liftIO $ putStrLn $ "HTTP 400 - " ++ msg ++ ": " ++ parentId
+         toJsonResponse badRequest $ HttpResponse 400 $ pack msg
+      Just i  -> do
+         sensorIds <- optional $ queryString $ looks "sensorid"
+         xs <- query' acid GetSensors
+         let xs' = filter (\x -> sensorStationId x == i) xs
+             ids = map fromJust $ filter isJust $
+               case sensorIds of
+                  Nothing   -> []
+                  Just sids -> map (\x -> readMaybe x :: Maybe Integer) sids
+             xs'' =
+               case ids of
+                  [] -> xs'
+                  _  -> filter (\x -> any (== sensorId x) ids) xs'
+         toJsonResponse ok xs''
 
 
 doPutSolarBody acid = do
@@ -115,9 +145,9 @@ doPutSolarBody acid = do
    let x = A.eitherDecode body :: Either String SolarBody
    case x of
       Left e -> do
-         liftIO $ putStrLn $ "body didn't decode: " ++ e
-         liftIO $ putStrLn $ B.unpack body
-         mzero
+         let msg = "Invalid solarbody JSON"
+         liftIO $ putStrLn $ "HTTP 400 - " ++ msg ++ ": " ++ e
+         toJsonResponse badRequest $ HttpResponse 400 $ pack msg
       Right r -> do
          len <- update' acid (PutSolarBody r)
          toJsonResponse ok $ jsonCount len
@@ -128,9 +158,9 @@ doPutFeedType acid = do
    let x = A.eitherDecode body :: Either String FeedType
    case x of
       Left e -> do
-         liftIO $ putStrLn $ "body didn't decode: " ++ e
-         liftIO $ putStrLn $ B.unpack body
-         mzero
+         let msg = "Invalid feedtype JSON"
+         liftIO $ putStrLn $ "HTTP 400 - " ++ msg ++ ": " ++ e
+         toJsonResponse badRequest $ HttpResponse 400 $ pack msg
       Right r -> do
          len <- update' acid (PutFeedType r)
          toJsonResponse ok $ jsonCount len
@@ -141,9 +171,9 @@ doPutStation acid = do
    let x = A.eitherDecode body :: Either String Station
    case x of
       Left e -> do
-         liftIO $ putStrLn $ "body didn't decode: " ++ e
-         liftIO $ putStrLn $ B.unpack body
-         mzero
+         let msg = "Invalid station JSON"
+         liftIO $ putStrLn $ "HTTP 400 - " ++ msg ++ ": " ++ e
+         toJsonResponse badRequest $ HttpResponse 400 $ pack msg
       Right r -> do
          len <- update' acid (PutStation r)
          toJsonResponse ok $ jsonCount len
@@ -154,17 +184,79 @@ doPutSensor acid = do
    let x = A.eitherDecode body :: Either String Sensor
    case x of
       Left e -> do
-         liftIO $ putStrLn $ "body didn't decode: " ++ e
-         liftIO $ putStrLn $ B.unpack body
-         mzero
+         let msg = "Invalid sensor JSON"
+         liftIO $ putStrLn $ "HTTP 400 - " ++ msg ++ ": " ++ e
+         toJsonResponse badRequest $ HttpResponse 400 $ pack msg
       Right r -> do
          len <- update' acid (PutSensor r)
+         toJsonResponse ok $ jsonCount len
+
+
+doDeleteSolarBody acid = do
+   ident <- queryString $ look "solarbodyid"
+   let sbid = readMaybe ident :: Maybe Integer
+   case sbid of
+      Nothing -> do
+         let msg = "solarbodyid is not an integer"
+         liftIO $ putStrLn $ "HTTP 400 - " ++ msg ++ ": " ++ ident
+         toJsonResponse badRequest $ HttpResponse 400 $ pack msg
+      Just r -> do
+         len <- update' acid (DeleteSolarBody r)
+         toJsonResponse ok $ jsonCount len
+
+
+doDeleteFeedType acid = do
+   ident <- queryString $ look "feedtypeid"
+   let i = readMaybe ident :: Maybe Integer
+   case i of
+      Nothing -> do
+         let msg = "feedtypeid is not an integer"
+         liftIO $ putStrLn $ "HTTP 400 - " ++ msg ++ ": " ++ ident
+         toJsonResponse badRequest $ HttpResponse 400 $ pack msg
+      Just r -> do
+         len <- update' acid (DeleteFeedType r)
+         toJsonResponse ok $ jsonCount len
+
+
+doDeleteStation acid = do
+   ident <- queryString $ look "stationid"
+   let i = readMaybe ident :: Maybe Integer
+   case i of
+      Nothing -> do
+         let msg = "stationid is not an integer"
+         liftIO $ putStrLn $ "HTTP 400 - " ++ msg ++ ": " ++ ident
+         toJsonResponse badRequest $ HttpResponse 400 $ pack msg
+      Just r -> do
+         len <- update' acid (DeleteStation r)
+         toJsonResponse ok $ jsonCount len
+
+
+doDeleteSensor acid = do
+   ident <- queryString $ look "sensorid"
+   let i = readMaybe ident :: Maybe Integer
+   case i of
+      Nothing -> do
+         let msg = "sensorid is not an integer"
+         liftIO $ putStrLn $ "HTTP 400 - " ++ msg ++ ": " ++ ident
+         toJsonResponse badRequest $ HttpResponse 400 $ pack msg
+      Just r -> do
+         len <- update' acid (DeleteSensor r)
          toJsonResponse ok $ jsonCount len
 
 
 -----------------------------------------------------------
 -- HELPERS
 -----------------------------------------------------------
+
+
+log rq = do
+   t <- getCurrentTime
+   let (host,port) = rqPeer rq
+       meth = rqMethod rq
+   liftIO $ putStrLn $  (show t)
+                     ++ " - " ++ host ++ ":" ++ (show port)
+                     ++ " - " ++ (show meth)
+                     ++ " - " ++ (rqUri rq)
 
 
 toJsonResponse functor msg = do
@@ -178,8 +270,9 @@ doGetById i f = do
          qid <- queryString $ look i
          f qid
       , do
-         liftIO $ putStrLn $ "missing required var: " ++ i
-         mzero
+         let msg = "missing required var: " ++ i
+         liftIO $ putStrLn $ "HTTP 400 - " ++ msg
+         toJsonResponse badRequest $ HttpResponse 400 $ pack msg
       ]
 
 

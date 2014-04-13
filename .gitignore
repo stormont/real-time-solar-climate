@@ -1,6 +1,3 @@
 *.hi
 *.o
 *.exe
-server/hs/*.hi
-server/hs/*.o
-server/hs/*.exe

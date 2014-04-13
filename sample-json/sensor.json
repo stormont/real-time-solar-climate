@@ -1,0 +1,27 @@
+{
+    "levels": [
+        {
+            "feedTypeID": 1,
+            "min": 11.9,
+            "current": 12.1,
+            "max": 12.4
+        }
+    ],
+    "stationID": 1,
+    "infoUrl": "http://www.nasa.gov/mission_pages/msl/",
+    "name": "Forward Sensor",
+    "location": {
+        "elevation": 1234.56,
+        "latitude": 40.09,
+        "longitude": 138.12
+    },
+    "lifeSupport": {
+        "lastChange": 123456,
+        "isHabitable": false
+    },
+    "frequency": {
+        "lastUpdate": 12345678,
+        "interval": 300
+    },
+    "id": 1
+}

@@ -80,48 +80,60 @@ getSensors :: Query DB [Sensor]
 getSensors = dbSensors <$> ask
 
 
-putSolarBody :: SolarBody -> Update DB Int
+putSolarBody :: SolarBody -> Update DB Integer
 putSolarBody x = do
    db <- get
    let xs = fromDB db
+       m = if solarBodyId x == 0 && xs /= []
+            then (+ 1) $ maximum $ map solarBodyId xs
+            else solarBodyId x
        ys = nub
-          $ (:) x
+          $ (:) (x { solarBodyId = m })
           $ filter (\y -> solarBodyId y /= solarBodyId x) xs
    put $ toDB db ys
-   return $ length ys
+   return m
 
 
-putFeedType :: FeedType -> Update DB Int
+putFeedType :: FeedType -> Update DB Integer
 putFeedType x = do
    db <- get
    let xs = fromDB db
+       m = if feedTypeId x == 0 && xs /= []
+            then (+ 1) $ maximum $ map feedTypeId xs
+            else feedTypeId x
        ys = nub
-          $ (:) x
+          $ (:) (x { feedTypeId = m })
           $ filter (\y -> feedTypeId y /= feedTypeId x) xs
    put $ toDB db ys
-   return $ length ys
+   return m
 
 
-putStation :: Station -> Update DB Int
+putStation :: Station -> Update DB Integer
 putStation x = do
    db <- get
    let xs = fromDB db
+       m = if stationId x == 0 && xs /= []
+            then (+ 1) $ maximum $ map stationId xs
+            else stationId x
        ys = nub
-          $ (:) x
+          $ (:) (x { stationId = m })
           $ filter (\y -> stationId y /= stationId x) xs
    put $ toDB db ys
-   return $ length ys
+   return m
 
 
-putSensor :: Sensor -> Update DB Int
+putSensor :: Sensor -> Update DB Integer
 putSensor x = do
    db <- get
    let xs = fromDB db
+       m = if sensorId x == 0 && xs /= []
+            then (+ 1) $ maximum $ map sensorId xs
+            else sensorId x
        ys = nub
-          $ (:) x
+          $ (:) (x { sensorId = m })
           $ filter (\y -> sensorId y /= sensorId x) xs
    put $ toDB db ys
-   return $ length ys
+   return m
 
 
 deleteSolarBody :: Integer -> Update DB Int

@@ -9,6 +9,7 @@ module DataTypes
    , Frequency(..)
    , Level(..)
    , JsonCount(..)
+   , JsonID(..)
    , HttpResponse(..)
    ) where
 
@@ -112,6 +113,12 @@ instance Eq Station where
 data JsonCount =
    JsonCount
       { jcCount :: Integer
+      } deriving (Show,Read)
+
+
+data JsonID =
+   JsonID
+      { jsonId :: Integer
       } deriving (Show,Read)
 
 
@@ -302,6 +309,18 @@ instance FromJSON JsonCount where
 instance ToJSON JsonCount where
    toJSON (JsonCount a) = object
       [ t_count .= a
+      ]
+
+
+instance FromJSON JsonID where
+   parseJSON (Object x) =   JsonID
+                        <$> (x .: t_id)
+   parseJSON _          = mzero
+
+
+instance ToJSON JsonID where
+   toJSON (JsonID a) = object
+      [ t_id .= a
       ]
 
 

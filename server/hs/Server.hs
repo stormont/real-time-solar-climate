@@ -57,29 +57,39 @@ handlers acid = do
 
 
 doGet acid = do
-   liftIO $ putStrLn "Handling GET"
-   msum
-      [ dir "solarbodies" $ doGetSolarBodies acid
-      , dir "feedtypes"   $ doGetFeedTypes acid
-      , dir "stations"    $ doGetById "solarbodyid" (doGetStations acid)
-      , dir "sensors"     $ doGetById "stationid" (doGetSensors acid)
-      , do
-         liftIO $ putStrLn "HTTP 400 - unrecognized GET"
-         toJsonResponse badRequest $ HttpResponse 400 $ pack "Invalid get/ request"
-      ]
+   rq <- askRq
+   let meth = rqMethod rq
+   if meth /= GET && meth /= HEAD
+      then mzero
+      else do
+         liftIO $ putStrLn "Handling GET"
+         msum
+            [ dir "solarbodies" $ doGetSolarBodies acid
+            , dir "feedtypes"   $ doGetFeedTypes acid
+            , dir "stations"    $ doGetById "solarbodyid" (doGetStations acid)
+            , dir "sensors"     $ doGetById "stationid" (doGetSensors acid)
+            , do
+               liftIO $ putStrLn "HTTP 400 - unrecognized GET"
+               toJsonResponse badRequest $ HttpResponse 400 $ pack "Invalid get/ request"
+            ]
 
 
 doPut acid = do
-   liftIO $ putStrLn "Handling POST"
-   msum
-      [ dir "solarbody" $ doPutSolarBody acid
-      , dir "feedtype"  $ doPutFeedType acid
-      , dir "station"   $ doPutStation acid
-      , dir "sensor"    $ doPutSensor acid
-      , do
-         liftIO $ putStrLn "HTTP 400 - unrecognized GET"
-         toJsonResponse badRequest $ HttpResponse 400 $ pack "Invalid post/ request"
-      ]
+   rq <- askRq
+   let meth = rqMethod rq
+   if meth /= POST
+      then mzero
+      else do
+         liftIO $ putStrLn "Handling POST"
+         msum
+            [ dir "solarbody" $ doPutSolarBody acid
+            , dir "feedtype"  $ doPutFeedType acid
+            , dir "station"   $ doPutStation acid
+            , dir "sensor"    $ doPutSensor acid
+            , do
+               liftIO $ putStrLn "HTTP 400 - unrecognized GET"
+               toJsonResponse badRequest $ HttpResponse 400 $ pack "Invalid post/ request"
+            ]
 
 
 doDelete acid = do
@@ -150,7 +160,7 @@ doPutSolarBody acid = do
          toJsonResponse badRequest $ HttpResponse 400 $ pack msg
       Right r -> do
          len <- update' acid (PutSolarBody r)
-         toJsonResponse ok $ jsonCount len
+         toJsonResponse ok $ toJsonId len
 
 
 doPutFeedType acid = do
@@ -163,7 +173,7 @@ doPutFeedType acid = do
          toJsonResponse badRequest $ HttpResponse 400 $ pack msg
       Right r -> do
          len <- update' acid (PutFeedType r)
-         toJsonResponse ok $ jsonCount len
+         toJsonResponse ok $ toJsonId len
 
 
 doPutStation acid = do
@@ -176,7 +186,7 @@ doPutStation acid = do
          toJsonResponse badRequest $ HttpResponse 400 $ pack msg
       Right r -> do
          len <- update' acid (PutStation r)
-         toJsonResponse ok $ jsonCount len
+         toJsonResponse ok $ toJsonId len
 
 
 doPutSensor acid = do
@@ -189,7 +199,7 @@ doPutSensor acid = do
          toJsonResponse badRequest $ HttpResponse 400 $ pack msg
       Right r -> do
          len <- update' acid (PutSensor r)
-         toJsonResponse ok $ jsonCount len
+         toJsonResponse ok $ toJsonId len
 
 
 doDeleteSolarBody acid = do
@@ -202,7 +212,7 @@ doDeleteSolarBody acid = do
          toJsonResponse badRequest $ HttpResponse 400 $ pack msg
       Just r -> do
          len <- update' acid (DeleteSolarBody r)
-         toJsonResponse ok $ jsonCount len
+         toJsonResponse ok $ toJsonCount len
 
 
 doDeleteFeedType acid = do
@@ -215,7 +225,7 @@ doDeleteFeedType acid = do
          toJsonResponse badRequest $ HttpResponse 400 $ pack msg
       Just r -> do
          len <- update' acid (DeleteFeedType r)
-         toJsonResponse ok $ jsonCount len
+         toJsonResponse ok $ toJsonCount len
 
 
 doDeleteStation acid = do
@@ -228,7 +238,7 @@ doDeleteStation acid = do
          toJsonResponse badRequest $ HttpResponse 400 $ pack msg
       Just r -> do
          len <- update' acid (DeleteStation r)
-         toJsonResponse ok $ jsonCount len
+         toJsonResponse ok $ toJsonCount len
 
 
 doDeleteSensor acid = do
@@ -241,7 +251,7 @@ doDeleteSensor acid = do
          toJsonResponse badRequest $ HttpResponse 400 $ pack msg
       Just r -> do
          len <- update' acid (DeleteSensor r)
-         toJsonResponse ok $ jsonCount len
+         toJsonResponse ok $ toJsonCount len
 
 
 -----------------------------------------------------------
@@ -276,7 +286,10 @@ doGetById i f = do
       ]
 
 
-jsonCount = JsonCount . toInteger
+toJsonCount = JsonCount . toInteger
+
+
+toJsonId = JsonID . toInteger
 
 
 readMaybe :: Read a => String -> Maybe a

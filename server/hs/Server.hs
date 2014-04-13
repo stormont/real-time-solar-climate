@@ -93,16 +93,21 @@ doPut acid = do
 
 
 doDelete acid = do
-   liftIO $ putStrLn "Handling DELETE"
-   msum
-      [ dir "solarbody" $ doDeleteSolarBody acid
-      , dir "feedtype"  $ doDeleteFeedType acid
-      , dir "station"   $ doDeleteStation acid
-      , dir "sensor"    $ doDeleteSensor acid
-      , do
-         liftIO $ putStrLn "HTTP 400 - unrecognized GET"
-         toJsonResponse badRequest $ HttpResponse 400 $ pack "Invalid delete/ request"
-      ]
+   rq <- askRq
+   let meth = rqMethod rq
+   if meth /= POST
+      then mzero
+      else do
+         liftIO $ putStrLn "Handling DELETE"
+         msum
+            [ dir "solarbody" $ doDeleteSolarBody acid
+            , dir "feedtype"  $ doDeleteFeedType acid
+            , dir "station"   $ doDeleteStation acid
+            , dir "sensor"    $ doDeleteSensor acid
+            , do
+               liftIO $ putStrLn "HTTP 400 - unrecognized DELETE"
+               toJsonResponse badRequest $ HttpResponse 400 $ pack "Invalid delete/ request"
+            ]
 
 
 doGetSolarBodies acid = do
@@ -125,7 +130,7 @@ doGetStations acid parentId = do
       Just i  -> do
          xs <- query' acid GetStations
          let xs' = filter (\x -> stationSolarBodyId x == i) xs
-         toJsonResponse ok xs
+         toJsonResponse ok xs'
 
 
 doGetSensors acid parentId = do
@@ -203,11 +208,11 @@ doPutSensor acid = do
 
 
 doDeleteSolarBody acid = do
-   ident <- queryString $ look "solarbodyid"
+   ident <- queryString $ look "id"
    let sbid = readMaybe ident :: Maybe Integer
    case sbid of
       Nothing -> do
-         let msg = "solarbodyid is not an integer"
+         let msg = "id is not an integer"
          liftIO $ putStrLn $ "HTTP 400 - " ++ msg ++ ": " ++ ident
          toJsonResponse badRequest $ HttpResponse 400 $ pack msg
       Just r -> do
@@ -216,11 +221,11 @@ doDeleteSolarBody acid = do
 
 
 doDeleteFeedType acid = do
-   ident <- queryString $ look "feedtypeid"
+   ident <- queryString $ look "id"
    let i = readMaybe ident :: Maybe Integer
    case i of
       Nothing -> do
-         let msg = "feedtypeid is not an integer"
+         let msg = "id is not an integer"
          liftIO $ putStrLn $ "HTTP 400 - " ++ msg ++ ": " ++ ident
          toJsonResponse badRequest $ HttpResponse 400 $ pack msg
       Just r -> do
@@ -229,11 +234,11 @@ doDeleteFeedType acid = do
 
 
 doDeleteStation acid = do
-   ident <- queryString $ look "stationid"
+   ident <- queryString $ look "id"
    let i = readMaybe ident :: Maybe Integer
    case i of
       Nothing -> do
-         let msg = "stationid is not an integer"
+         let msg = "id is not an integer"
          liftIO $ putStrLn $ "HTTP 400 - " ++ msg ++ ": " ++ ident
          toJsonResponse badRequest $ HttpResponse 400 $ pack msg
       Just r -> do
@@ -242,11 +247,11 @@ doDeleteStation acid = do
 
 
 doDeleteSensor acid = do
-   ident <- queryString $ look "sensorid"
+   ident <- queryString $ look "id"
    let i = readMaybe ident :: Maybe Integer
    case i of
       Nothing -> do
-         let msg = "sensorid is not an integer"
+         let msg = "id is not an integer"
          liftIO $ putStrLn $ "HTTP 400 - " ++ msg ++ ": " ++ ident
          toJsonResponse badRequest $ HttpResponse 400 $ pack msg
       Just r -> do
